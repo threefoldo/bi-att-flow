@@ -1,6 +1,12 @@
 # Bi-directional Attention Flow for Machine Comprehension
  
+<<<<<<< HEAD
 - This the original implementation of [Bi-directional Attention Flow for Machine Comprehension][paper].
+=======
+- This the original implementation of [Bi-directional Attention Flow for Machine Comprehension][paper] (Seo et al., 2016).
+- This is tensorflow v1.1.0 comaptible version. This is not compatible with previous trained models, 
+so if you want to use them, go to [v0.2.1][v0.2.1]. 
+>>>>>>> dev
 - The CodaLab worksheet for the [SQuAD Leaderboard][squad] submission is available [here][worksheet].
 - For TensorFlow v1.1 compatible version, see the [dev][dev] branch.
 - Please contact [Minjoon Seo][minjoon] ([@seominjoon][minjoon-github]) for questions and suggestions.
@@ -11,7 +17,11 @@
 - unzip, wget (for running `download.sh` only)
 
 #### Python Packages
+<<<<<<< HEAD
 - tensorflow (deep learning library, only works on r0.11)
+=======
+- tensorflow (deep learning library, verified on 1.1.0)
+>>>>>>> dev
 - nltk (NLP tools, verified on 3.2.1)
 - tqdm (progress bar, verified on 4.7.4)
 - jinja2 (for visaulization; if you only train and test, not needed)
@@ -79,6 +89,9 @@ python squad/evaluate-v1.1.py $HOME/data/squad/dev-v1.1.json out/basic/00/answer
 ```
 
 ### 3.1 Loading from pre-trained weights
+NOTE: this version is not compatible with the following trained models. 
+For compatibility, use [v0.2.1][v0.2.1]. 
+
 Instead of training the model yourself, you can choose to use pre-trained weights that were used for [SQuAD Leaderboard][squad] submission.
 Refer to [this worksheet][worksheet] in CodaLab to reproduce the results.
 If you are unfamiliar with CodaLab, follow these simple steps (given that you met all prereqs above):
@@ -103,15 +116,30 @@ If you are unfamiliar with CodaLab, follow these simple steps (given that you me
 
 ### Dev Data
 
+<<<<<<< HEAD
 Note these scores are from the official evaluator (copied in `squad` folder, `squad/evaluate-v1.1.py`). For more information See 3.Test.
 The scores appeared during the training could be lower than the scores from the official evaluator. 
+=======
+|          | EM (%) | F1 (%) |
+| -------- |:------:|:------:|
+| single   | 67.8   | 77.4   |
+
+###Dev Data (old)
+NOTE: These numbers are from [v0.2.1][v0.2.1]. 
+>>>>>>> dev
 
 |          | EM (%) | F1 (%) |
 | -------- |:------:|:------:|
 | single   | 67.7   | 77.3   |
 | ensemble | 72.6   | 80.7   |
 
+<<<<<<< HEAD
 ### Test Data
+=======
+
+###Test Data (old)
+NOTE: These numbers are from [v0.2.1][v0.2.1]. 
+>>>>>>> dev
 
 |          | EM (%) | F1 (%) |
 | -------- |:------:|:------:|
@@ -161,3 +189,4 @@ For now, please refer to the `demo` branch of this repository.
 [minjoon]: https://seominjoon.github.io
 [minjoon-github]: https://github.com/seominjoon
 [dev]: https://github.com/allenai/bi-att-flow/tree/dev
+
