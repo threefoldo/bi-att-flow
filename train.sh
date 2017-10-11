@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# convert webqa data
+cd ../DataPreparation && python3 convert.py webqa/me_test.ann.json ../training/09292020/data/squad
+
 # preprocessing
 python3 -m squad.prepro -s ../training/09292020/data/squad/ -t ../training/09292020/data/squad
 
