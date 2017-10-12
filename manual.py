@@ -7,11 +7,11 @@ base_dir = 'expr1012/'
 # preprocessing
 # python -m squad.prepro --mode single --single_path expr1012/sample1.json --target_dir expr1012/inter_single --glove_dir /home/jinzy/data/glove
 
-def preprocessing(args, source):
+def preprocessing(args):
     args.mode = 'single'
     args.debug = 'store_true'
     args.split = 'store_true'
-    args.single_path = base_dir + source
+    args.single_path = base_dir + args.source
     args.source_dir = base_dir
     args.target_dir = base_dir + 'inter_single'
     args.glove_corpus = '6B'
@@ -70,6 +70,8 @@ def set_default_params(config):
     config.share_lstm_weights = True
     config.var_decay = 0.999
 
+    config.max_sent_size = 150
+
     # optimizations
     config.len_opt = True
     config.cluster = True
@@ -109,6 +111,16 @@ def set_default_params(config):
     config.c2q_att = True
     config.dynamic_att = False
 
+    # specific to input data
+    config.max_num_sents = 50
+    config.max_sent_size = 150
+    config.max_ques_size = 100
+    config.max_word_size = 20
+    config.max_para_size = 50
+    config.char_vocab_size = 20
+    config.word_emb_size = 100
+    config.word_vocab_size = 33
+
 def read_file(config):
     # read data from json files
     print('reading data from files...')
@@ -116,40 +128,52 @@ def read_file(config):
     update_config(config, [test_data])
     return test_data
 
-def build_model(config):
-    # build the model
+def predict(question = ''):
+    # start from here
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', "--source", default='sample.json')
+    args = parser.parse_args()
+
+    # step 0: write request to file
+    if question != '':
+        print('write request to file')
+        json.dump(question, open(base_dir + 'request.json', 'w'))
+        args.source = 'request.json'
+    else:
+        print('use ' + args.source)
+
+    # step 1: sample.json ==> data.json, shared.json
+    preprocessing(args)
+
+    # step 2: build the model and read data
+    tf.reset_default_graph()
+    config = tf.app.flags.FLAGS
+    set_default_params(config)
+    test_data = read_file(config)
+
+    # step 3: predict answers
     print('build the model')
     models = get_multi_gpu_models(config)
     print("num params: {}".format(get_num_params()))
-    return models
+
+    model = models[0]
+    evaluator = ForwardEvaluator(config, model)
+    graph_handler = GraphHandler(config, model)  # controls all tensors and variables in the graph, including loading /saving
+    sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+    graph_handler.initialize(sess)
+
+    num_batches = math.ceil(test_data.num_examples / config.batch_size)
+    e = evaluator.get_evaluation_from_batches(sess, tqdm(test_data.get_batches(config.batch_size, num_batches=num_batches), total=num_batches))
+    print(e)
+
+    # step 4: dump result
+    # print("dumping answer ...")
+    # graph_handler.dump_answer(e, path=config.answer_path)
+    # print("dumping eval ...")
+    # graph_handler.dump_eval(e, path=config.eval_path)
+
+    return e.id2answer_dict
 
 
-# start from here
-parser = argparse.ArgumentParser()
-args = parser.parse_args()
-
-# step 1: sample.json ==> data.json, shared.json
-preprocessing(args, 'sample1.json')
-
-# step 2: build the model and read data
-config = tf.app.flags.FLAGS
-set_default_params(config)
-test_data = read_file(config)
-models = build_model(config)
-
-# step 3: predict answers
-model = models[0]
-evaluator = ForwardEvaluator(config, model)
-graph_handler = GraphHandler(config, model)  # controls all tensors and variables in the graph, including loading /saving
-sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-graph_handler.initialize(sess)
-
-num_batches = math.ceil(test_data.num_examples / config.batch_size)
-e = evaluator.get_evaluation_from_batches(sess, tqdm(test_data.get_batches(config.batch_size, num_batches=num_batches), total=num_batches))
-print(e)
-
-# step 4: dump result
-print("dumping answer ...")
-graph_handler.dump_answer(e, path=config.answer_path)
-print("dumping eval ...")
-graph_handler.dump_eval(e, path=config.eval_path)
+if __name__ == '__main__':
+    print(predict())
