@@ -3,16 +3,21 @@ from basic.main import *
 
 config = tf.app.flags.FLAGS
 
+# preprocessing
+# python -m squad.prepro --mode single --single_path expr1012/dev-v1.1.json --target_dir expr1012/inter_single --glove_dir /home/jinzy/data/glove
+
 # directories
+base_dir = 'expr1012/'
 config.model_name = 'single'
-config.data_dir = 'inter_single/'
-config.eval_path = 'inter_single/eval.pklz'
+config.data_dir = base_dir + 'inter_single/'
+config.eval_path = base_dir + 'inter_single/eval.pklz'
 config.nodump_answer = True
 config.load_path = None
-config.save_dir = 'out-test/basic/00/save/'
-config.shared_path = 'out-test/basic/00/shared.json'
-config.out_base_dir = 'out-test'
-config.out_dir = 'out-test'
+config.save_dir = base_dir + 'out/basic/00/save/'
+config.shared_path = base_dir + 'out/basic/00/shared.json'
+config.out_base_dir = base_dir + 'out'
+config.out_dir = base_dir + 'out'
+config.answer_path = base_dir + 'answer'
 
 # device
 config.device = '/cpu:0'
@@ -98,3 +103,20 @@ update_config(config, [test_data])
 # build the model
 print('build the model')
 models = get_multi_gpu_models(config)
+model = models[0]
+print("num params: {}".format(get_num_params()))
+
+evaluator = ForwardEvaluator(config, model)
+graph_handler = GraphHandler(config, model)  # controls all tensors and variables in the graph, including loading /saving
+
+sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+graph_handler.initialize(sess)
+
+num_batches = math.ceil(test_data.num_examples / config.batch_size)
+e = evaluator.get_evaluation_from_batches(sess, tqdm(test_data.get_batches(config.batch_size, num_batches=num_batches), total=num_batches))
+print(e)
+
+print("dumping answer ...")
+graph_handler.dump_answer(e, path=config.answer_path)
+print("dumping eval ...")
+graph_handler.dump_eval(e, path=config.eval_path)
